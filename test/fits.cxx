@@ -2,17 +2,20 @@
 #include "vtkGraphics.h"
 #include "vtkPatented.h"
 #include "vtkFitsReader.h"
+#include <vtkSmartPointer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
 
 main() {
 
   // create a window to render into
-  vtkRenderWindow *renWin = vtkRenderWindow::New();
-  vtkRenderer *ren1 = vtkRenderer::New();
+  vtkSmartPointer<vtkRenderWindow>renWin = vtkSmartPointer<vtkRenderWindow>::New();
+  vtkSmartPointer<vtkRenderer>ren1 = vtkSmartPointer<vtkRenderer>::New();
 //ren1->SetBackground(1.0, 1.0, 1.0);
   renWin->AddRenderer(ren1);
-  vtkRenderWindowInteractor *iren = vtkRenderWindowInteractor::New();
+  vtkSmartPointer<vtkRenderWindowInteractor> iren =
+	  vtkSmartPointer<vtkRenderWindowInteractor>::New();
   iren->SetRenderWindow(renWin);
-
   // vtk pipeline
   vtkFitsReader *fitsReader = vtkFitsReader::New();
   fitsReader->SetFileName("OMC.fits");
