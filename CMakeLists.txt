@@ -20,7 +20,7 @@ endif(NOT OPENGL_FOUND)
 
 include_directories(
 	include
-	${CFITSIO_INCLUDE_DIR}
+    ${CFITSIO_INCLUDE_DIRS}
 )
 
 set(SOURCES 
@@ -32,4 +32,5 @@ set(SOURCES
 add_executable(vtkFitsReader ${SOURCES})
 target_link_libraries(vtkFitsReader 
 	${VTK_LIBRARIES}
+    ${CFITSIO_LIBRARY}
 )
