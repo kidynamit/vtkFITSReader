@@ -1,12 +1,17 @@
-#include "vtkCommon.h"
-#include "vtkGraphics.h"
-#include "vtkPatented.h"
-#include "vtkFitsReader.h"
+#include <vtkOutlineFilter.h>
+#include <vtkPolyDataMapper.h>
 #include <vtkSmartPointer.h>
+#include <vtkImageDataGeometryFilter.h>
 #include <vtkRenderWindow.h>
+#include <vtkMarchingCubes.h>
+#include <vtkRenderer.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkActor.h>
+#include <vtkProperty.h>
 
-main() {
+#include "vtkFitsReader.h"
+
+int main() {
 
   // create a window to render into
   vtkSmartPointer<vtkRenderWindow>renWin = vtkSmartPointer<vtkRenderWindow>::New();
@@ -18,52 +23,56 @@ main() {
   iren->SetRenderWindow(renWin);
   // vtk pipeline
   vtkFitsReader *fitsReader = vtkFitsReader::New();
-  fitsReader->SetFileName("OMC.fits");
+  fitsReader->SetFileName("D:/project/Masters/vtkFitsReader/data/OMC.fits");
   fitsReader->Update();
 
   // outline
-  vtkOutlineFilter *outlineF = vtkOutlineFilter::New();
-  outlineF->SetInput(fitsReader->GetOutput());
+  vtkSmartPointer<vtkOutlineFilter> outlineF = 
+	  vtkSmartPointer<vtkOutlineFilter>::New();
+  outlineF->SetInputData(fitsReader->GetOutput());
 
-  vtkPolyDataMapper *outlineM = vtkPolyDataMapper::New();
-  outlineM->SetInput(outlineF->GetOutput());
+  vtkSmartPointer<vtkPolyDataMapper> outlineM =
+	  vtkSmartPointer<vtkPolyDataMapper>::New();
+  outlineM->SetInputData(outlineF->GetOutput());
   outlineM->ScalarVisibilityOff();
 
-  vtkActor *outlineA = vtkActor::New();
+  vtkSmartPointer<vtkActor> outlineA= vtkSmartPointer<vtkActor>::New();
   outlineA->SetMapper(outlineM);
 //outlineA->GetProperty()->SetColor(0.0, 0.0, 0.0);
 
   // isosurface
-  vtkMarchingCubes *shellE = vtkMarchingCubes::New();
-  shellE->SetInput(fitsReader->GetOutput());
+  vtkSmartPointer<vtkMarchingCubes> shellE = 
+	  vtkSmartPointer<vtkMarchingCubes>::New();
+  shellE->SetInputData(fitsReader->GetOutput());
   shellE->SetValue(0, 10.0f);
 
-  // decimate
+  // decimatevoid 
 //vtkDecimate *shellD = vtkDecimate::New();
-//shellD->SetInput(shellE->GetOutput());
+//shellD->SetInputData(shellE->GetOutput());
 //shellD->SetTargetReduction(0.7);
 
-  vtkPolyDataMapper *shellM = vtkPolyDataMapper::New();
-  shellM->SetInput(shellE->GetOutput());
-//shellM->SetInput(shellD->GetOutput());
+  vtkSmartPointer<vtkPolyDataMapper> shellM =
+	  vtkSmartPointer<vtkPolyDataMapper>::New();
+  shellM->SetInputData(shellE->GetOutput());
+//shellM->SetInputData(shellD->GetOutput());
   shellM->ScalarVisibilityOff();
 
-  vtkActor *shellA = vtkActor::New();
+  vtkSmartPointer<vtkActor> shellA = vtkSmartPointer<vtkActor>::New();
   shellA->SetMapper(shellM);
   shellA->GetProperty()->SetColor(0.5, 0.5, 1.0);
 
   // slice
-  vtkStructuredPointsGeometryFilter *sliceE =
-               vtkStructuredPointsGeometryFilter::New();
+  vtkImageDataGeometryFilter *sliceE =
+               vtkImageDataGeometryFilter::New();
   // values are clamped
   sliceE->SetExtent(0, 5000, 0, 5000, 13, 13);
-  sliceE->SetInput(fitsReader->GetOutput());
+  sliceE->SetInputData(fitsReader->GetOutput());
 
-  vtkPolyDataMapper *sliceM = vtkPolyDataMapper::New();
-  sliceM->SetInput(sliceE->GetOutput());
+  vtkSmartPointer<vtkPolyDataMapper> sliceM = 
+	  vtkSmartPointer<vtkPolyDataMapper>::New();
+  sliceM->SetInputData(sliceE->GetOutput());
   sliceM->ScalarVisibilityOn();
-  float *range;
-  range = fitsReader->GetOutput()->GetScalarRange();
+  double * range = fitsReader->GetOutput()->GetScalarRange();
   sliceM->SetScalarRange(range);
 
   vtkActor *sliceA = vtkActor::New();
@@ -86,4 +95,5 @@ main() {
   // Begin mouse interaction
   iren->Start();
 
+  return 0;
 }
