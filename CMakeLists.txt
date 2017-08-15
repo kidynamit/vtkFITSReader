@@ -24,9 +24,9 @@ include_directories(
 )
 
 set(SOURCES 
-    	${TEST_DIR}/fits.cxx
-    	${SOURCE_DIR}/vtkFitsReader.cxx
-    	${INCLUDE_DIR}/vtkFitsReader.h
+	${TEST_DIR}/fits.cxx
+	${SOURCE_DIR}/vtkFitsReader.cxx
+	${INCLUDE_DIR}/vtkFitsReader.h
 )
 
 add_executable(vtkFitsReader ${SOURCES})
