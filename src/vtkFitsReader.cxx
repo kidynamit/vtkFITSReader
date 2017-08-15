@@ -1,27 +1,28 @@
-#include <ieeefp.h>
 #include "vtkFitsReader.h"
 
+#include "ieeefp.h"
+#include <vtkDataArray.h>
+#include <vtkFloatArray.h>
+#include <vtkErrorCode.h>
+#include <vtkFieldData.h>
+#include <vtkInformation.h>
+#include <vtkInformationVector.h>
+#include <vtkObjectFactory.h>
+#include <vtkPointData.h>
+#include <vtkStreamingDemandDrivenPipeline.h>
+
 vtkFitsReader::vtkFitsReader() {
-  this->filename[0]='\0';
-  this->xStr[0]='\0';
-  this->yStr[0]='\0';
-  this->zStr[0]='\0';
-  this->title[0]='\0';
+  vtkStructuredPoints *output = vtkStructuredPoints::New();
+  this->SetOutput(output);
+  // Releasing data for pipeline parallism.
+  // Filters will know it is empty.
+  output->ReleaseData();
+  output->Delete();
 }
 
-void vtkFitsReader::SetFileName(char *name) {
-
-  if (!name) {
-    vtkErrorMacro(<<"Null Datafile!");
-    return;
-  }
-  sprintf(this->filename, "%s", name);
-
-  this->Modified(); // Needs to Execute() next time needed (load new dataset)
-}   
 
 // Note: from cookbook.c in fitsio distribution.
-void vtkFitsReader::printerror(int status) {
+void vtkFitsReader::PrintError(int status) {
 
     cerr << "vtkFitsReader ERROR.";
     if (status) {
@@ -30,135 +31,106 @@ void vtkFitsReader::printerror(int status) {
     }
     return;
 }
- 
-// Note: This function adapted from readimage() from cookbook.c in
-// fitsio distribution.
-void vtkFitsReader::Execute() {
 
-  //ReadHeader();
+//----------------------------------------------------------------------------
 
-  vtkStructuredPoints *output = (vtkStructuredPoints *) this->Output;
+int vtkFitsReader::RequestData(
+	vtkInformation *,
+	vtkInformationVector **,
+	vtkInformationVector *outputVector)
+{
+	vtkInformation *outInfo = outputVector->GetInformationObject(0);
+	this->SetErrorCode(vtkErrorCode::NoError);
+	vtkIdType numPts = 0, numCells = 0;
+	char line[256];
+	vtkIdType npts, ncells;
+	int dimsRead = 0, arRead = 0, originRead = 0;
+	vtkStructuredPoints *output = vtkStructuredPoints::SafeDownCast(
+		outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
-  fitsfile *fptr;
-  int status = 0, nfound = 0, anynull = 0;
-  long naxes[3], fpixel, nbuffer, npixels, ii;
-  const int buffsize = 1000;
+	int status = 0, nfound = 0, anynull = 0;
+	long naxes[3], fpixel, nbuffer, npixels;
+	const int buffsize = 1000;
 
-  float datamin, datamax, nullval, buffer[buffsize];
+	float datamin, datamax, nullval, buffer[buffsize];
+	// ImageSource superclass does not do this.
+	output->ReleaseData();
 
-  if ( fits_open_file(&fptr, this->filename, READONLY, &status) )
-    printerror( status );
+	fitsfile * fptr;
+	vtkDebugMacro(<< "Reading vtk structured points file...");
+	if (fits_open_file(&fptr, this->FileName, READONLY, &status))
+	{
+		PrintError(status);
+	}
+	/* read the NAXIS1 and NAXIS2 keyword to get image size */
+	if (fits_read_keys_lng(fptr, "NAXIS", 1, 3, naxes, &nfound, &status))
+	{
+		PrintError(status);
+	}
+	npixels = naxes[0] * naxes[1] * naxes[2]; /* num of pixels in the image */
+	fpixel = 1;
+	nullval = 0;                /* don't check for null values in the image */
+	datamin = 1.0E30;
+	datamax = -1.0E30;
 
-  /* read the NAXIS1 and NAXIS2 keyword to get image size */
-  if ( fits_read_keys_lng(fptr, "NAXIS", 1, 3, naxes, &nfound, &status) )
-    printerror( status );
+	cerr << "\nvtkFitsReader: " << this->filename << endl;
+	cerr << "Dim: " << naxes[0] << " " << naxes[1] << " " << naxes[2] << endl;
+	cerr << "points: " << npixels << endl;
+	cerr << "creating vtk structured points dataset..." << endl;
 
-  npixels  = naxes[0] * naxes[1] * naxes[2]; /* num of pixels in the image */
-  fpixel   = 1;
-  nullval  = 0;                /* don't check for null values in the image */
-  datamin  = 1.0E30;
-  datamax  = -1.0E30;
+	output->SetDimensions(naxes[0], naxes[1], naxes[2]);
+	output->SetOrigin(0.0, 0.0, 0.0);
 
-  cerr << "\nvtkFitsReader: " << this->filename << endl;
-  cerr << "Dim: " << naxes[0] << " " << naxes[1] << " " << naxes[2] << endl; 
-  cerr << "points: " << npixels << endl;
-  cerr << "creating vtk structured points dataset..." << endl;
+	// Read structured points specific stuff
+	//
+	vtkFloatArray* scalars = vtkFloatArray::New();
+	scalars->SetNumberOfComponents(npixels);
+	float * pscalars = scalars->WritePointer(0, npixels);
+	
+	size_t idx = 0;
+	while (npixels > 0) {
 
-  output->SetDimensions(naxes[0], naxes[1], naxes[2]);
-  output->SetOrigin(0.0, 0.0, 0.0);
+		nbuffer = npixels;
+		if (npixels > buffsize)
+			nbuffer = buffsize;
 
-  //vtkFloatScalars *scalars = new vtkFloatScalars(npixels);
-  vtkFloatScalars *scalars = vtkFloatScalars::New();
-  scalars->Allocate(npixels);
+		if (fits_read_img(fptr, TFLOAT, fpixel, nbuffer, &nullval,
+			buffer, &anynull, &status))
+			PrintError(status);
 
-  while (npixels > 0) {
+		for (int i = 0; i < nbuffer; i++) {
 
-    nbuffer = npixels;
-    if (npixels > buffsize)
-      nbuffer = buffsize;      
+			if (_isnanf(buffer[i])) buffer[i] = -1000000.0; // hack for now
+			pscalars[idx++] = buffer[i];
 
-    if ( fits_read_img(fptr, TFLOAT, fpixel, nbuffer, &nullval,
-                       buffer, &anynull, &status) )
-      printerror( status );
+			if (buffer[i] < datamin)
+				datamin = buffer[i];
+			if (buffer[i] > datamax)
+				datamax = buffer[i];
+		}
 
-    for (ii = 0; ii < nbuffer; ii++)  {
+		npixels -= nbuffer;    /* increment remaining number of pixels */
+		fpixel += nbuffer;    /* next pixel to be read in image */
+	}
 
-      if (_isnanf(buffer[ii])) buffer[ii] = -1000000.0; // hack for now
-      scalars->InsertNextScalar(buffer[ii]);
+	cerr << "min: " << datamin << " max: " << datamax << endl;
 
-      if ( buffer[ii] < datamin )
-        datamin = buffer[ii];
-      if ( buffer[ii] > datamax )
-        datamax = buffer[ii];
-    }
+	if (fits_close_file(fptr, &status))
+		PrintError(status);
 
-    npixels -= nbuffer;    /* increment remaining number of pixels */
-    fpixel  += nbuffer;    /* next pixel to be read in image */
-  }
+	output->GetPointData()->SetScalars(scalars);
 
-  cerr << "min: " << datamin << " max: " << datamax << endl;
+	cerr << "done." << endl;
 
-  if ( fits_close_file(fptr, &status) )
-       printerror( status );
-
-  output->GetPointData()->SetScalars(scalars);
-
-  cerr << "done." << endl;
-
-  return;
+	return 1;
 }
 
-// Note: This function adapted from printheader() from cookbook.c in
-// fitsio distribution.
-void vtkFitsReader::ReadHeader() {
-  fitsfile *fptr;       /* pointer to the FITS file, defined in fitsio.h */
-
-  int status, nkeys, keypos, hdutype, ii, jj;
-  char card[FLEN_CARD];   /* standard string lengths defined in fitsioc.h */
-
-  status = 0;
-
-  if ( fits_open_file(&fptr, filename, READONLY, &status) )
-       printerror( status );
-
-  /* attempt to move to next HDU, until we get an EOF error */
-  for (ii = 1; !(fits_movabs_hdu(fptr, ii, &hdutype, &status) ); ii++)
-  {
-      /* get no. of keywords */
-      if (fits_get_hdrpos(fptr, &nkeys, &keypos, &status) )
-          printerror( status );
-
-      //cerr << "from header:" << endl;
-      // not part of header...
-      //printf("Header listing for HDU #%d:\n", ii);
-      for (jj = 1; jj <= nkeys; jj++)  {
-          if ( fits_read_record(fptr, jj, card, &status) )
-               printerror( status );
-
-          if (!strncmp(card, "CTYPE", 5)) {
-            //cerr << card << endl;
-            char *first = strchr(card, '\'');
-            char *last = strrchr(card, '\'');
-            *last = '\0';
-            if (card[5] == '1')
-              strcpy(xStr, first+1);
-            if (card[5] == '2')
-              strcpy(yStr, first+1);
-            if (card[5] == '3')
-              strcpy(zStr, first+1);
-          }
-          if (!strncmp(card, "OBJECT", 6)) {
-            //cerr << card << endl;
-            char *first = strchr(card, '\'');
-            char *last = strrchr(card, '\'');
-            *last = '\0';
-            strcpy(title, first+1);
-          }
-      }
-  }
-  //cerr << "\nextracted strings:\n" << title << "\n" << xStr << "\n" << yStr << "\n" << zStr << endl;
+int vtkStructuredPointsReader::FillOutputPortInformation(int,
+	vtkInformation *info)
+{
+	info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkFitsReader");
+	return 1;
 }
-
 void vtkFitsReader::PrintSelf(ostream& os, vtkIndent indent) {
   vtkStructuredPointsReader::PrintSelf(os, indent);
   os << indent << "FITS File Name: " << (this->filename) << "\n";
