@@ -1,6 +1,5 @@
 #include <ieeefp.h>
 #include "vtkFitsReader.h"
-#include "vtkFloatScalars.h"
 
 vtkFitsReader::vtkFitsReader() {
   this->filename[0]='\0';
@@ -84,7 +83,7 @@ void vtkFitsReader::Execute() {
 
     for (ii = 0; ii < nbuffer; ii++)  {
 
-      if (isnanf(buffer[ii])) buffer[ii] = -1000000.0; // hack for now
+      if (_isnanf(buffer[ii])) buffer[ii] = -1000000.0; // hack for now
       scalars->InsertNextScalar(buffer[ii]);
 
       if ( buffer[ii] < datamin )
@@ -161,6 +160,6 @@ void vtkFitsReader::ReadHeader() {
 }
 
 void vtkFitsReader::PrintSelf(ostream& os, vtkIndent indent) {
+  vtkStructuredPointsReader::PrintSelf(os, indent);
   os << indent << "FITS File Name: " << (this->filename) << "\n";
-  vtkStructuredPointsSource::PrintSelf(os, indent);
 }
