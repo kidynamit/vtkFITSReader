@@ -26,18 +26,22 @@ protected:
 	void PrintError(int status); // from fitsio distribution
 	int RequestData(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE;
+	int ReadHeader() { return 1; }
+
+	int RequestUpdateExtent(vtkInformation *, vtkInformationVector **,
+		vtkInformationVector *) VTK_OVERRIDE
+	{
+		return 1;
+	}
+	int RequestInformation(vtkInformation *, vtkInformationVector **,
+		vtkInformationVector *) VTK_OVERRIDE
+	{
+		return 1;
+	}
+
 
 	// Default method performs Update to get information.  Not all the old
 	// structured points sources compute information
-
-	int FillOutputPortInformation(int, vtkInformation *) VTK_OVERRIDE;
-
-private:
-	char title[80];
-	char filename[256]; // static buffer for filename
-	char xStr[80];
-	char yStr[80];
-	char zStr[80];
 
 };
 
