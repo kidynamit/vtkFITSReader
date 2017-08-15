@@ -11,6 +11,7 @@
 #include <vtkStructuredPointsReader.h>
 #include <fitsio.h>
 #include "vtkIOFitsModule.h"
+#include "vtkStructuredPoints.h"
 
 class VTK_EXPORT vtkFitsReader : public vtkStructuredPointsReader
 {
@@ -20,23 +21,14 @@ public:
 	vtkTypeMacro(vtkFitsReader, vtkStructuredPointsReader)
 	void PrintSelf(ostream& os, vtkIndent indent);
 
-	void SetFileName(char *name);
-	char *GetFileName(){return filename;}
-
-
 protected:
 	vtkFitsReader();
-	~vtkFitsReader();
-	void Execute();
-	void ReadHeader();
-	void printerror(int status); // from fitsio distribution
+	void PrintError(int status); // from fitsio distribution
 	int RequestData(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE;
 
 	// Default method performs Update to get information.  Not all the old
 	// structured points sources compute information
-	int RequestInformation(vtkInformation *, vtkInformationVector **,
-		vtkInformationVector *) VTK_OVERRIDE;
 
 	int FillOutputPortInformation(int, vtkInformation *) VTK_OVERRIDE;
 
