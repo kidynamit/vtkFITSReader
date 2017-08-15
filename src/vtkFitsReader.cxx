@@ -42,8 +42,6 @@ int vtkFitsReader::RequestData(
 	vtkInformation *outInfo = outputVector->GetInformationObject(0);
 	this->SetErrorCode(vtkErrorCode::NoError);
 	vtkIdType numPts = 0, numCells = 0;
-	char line[256];
-	vtkIdType npts, ncells;
 	int dimsRead = 0, arRead = 0, originRead = 0;
 	vtkStructuredPoints *output = vtkStructuredPoints::SafeDownCast(
 		outInfo->Get(vtkDataObject::DATA_OBJECT()));
@@ -73,7 +71,7 @@ int vtkFitsReader::RequestData(
 	datamin = 1.0E30;
 	datamax = -1.0E30;
 
-	cerr << "\nvtkFitsReader: " << this->filename << endl;
+	cerr << "\nvtkFitsReader: " << this->FileName<< endl;
 	cerr << "Dim: " << naxes[0] << " " << naxes[1] << " " << naxes[2] << endl;
 	cerr << "points: " << npixels << endl;
 	cerr << "creating vtk structured points dataset..." << endl;
@@ -125,13 +123,7 @@ int vtkFitsReader::RequestData(
 	return 1;
 }
 
-int vtkStructuredPointsReader::FillOutputPortInformation(int,
-	vtkInformation *info)
-{
-	info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkFitsReader");
-	return 1;
-}
 void vtkFitsReader::PrintSelf(ostream& os, vtkIndent indent) {
   vtkStructuredPointsReader::PrintSelf(os, indent);
-  os << indent << "FITS File Name: " << (this->filename) << "\n";
+  os << indent << "FITS File Name: " << (this->FileName) << "\n";
 }
