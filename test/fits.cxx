@@ -36,7 +36,8 @@ int main() {
   outlineM->SetInputData(outlineF->GetOutput());
   outlineM->ScalarVisibilityOff();
 
-  vtkSmartPointer<vtkActor> outlineA= vtkSmartPointer<vtkActor>::New();
+  vtkSmartPointer<vtkActor> outlineA =
+	  vtkSmartPointer<vtkActor>::New();
   outlineA->SetMapper(outlineM);
 //outlineA->GetProperty()->SetColor(0.0, 0.0, 0.0);
 
@@ -57,7 +58,8 @@ int main() {
 //shellM->SetInputData(shellD->GetOutput());
   shellM->ScalarVisibilityOff();
 
-  vtkSmartPointer<vtkActor> shellA = vtkSmartPointer<vtkActor>::New();
+  vtkSmartPointer<vtkActor> shellA =
+	  vtkSmartPointer<vtkActor>::New();
   shellA->SetMapper(shellM);
   shellA->GetProperty()->SetColor(0.5, 0.5, 1.0);
 

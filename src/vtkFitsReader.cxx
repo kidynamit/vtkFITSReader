@@ -11,7 +11,8 @@
 #include <vtkPointData.h>
 #include <vtkStreamingDemandDrivenPipeline.h>
 
-vtkFitsReader::vtkFitsReader() {
+vtkFitsReader::vtkFitsReader() 
+{
 	this->pFile = nullptr;
 	vtkStructuredPoints *output = vtkStructuredPoints::New();
 	this->SetOutput(output);
@@ -23,7 +24,8 @@ vtkFitsReader::vtkFitsReader() {
 
 
 // Note: from cookbook.c in fitsio distribution.
-void vtkFitsReader::PrintError(int status) {
+void vtkFitsReader::PrintError(int status) 
+{
 
     cerr << "vtkFitsReader ERROR.";
     if (status) {
