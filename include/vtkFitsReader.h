@@ -24,21 +24,33 @@ public:
 protected:
 	vtkFitsReader();
 	void PrintError(int status); // from fitsio distribution
+	int ProcessRequest(vtkInformation*, vtkInformationVector**,
+		vtkInformationVector*) VTK_OVERRIDE;
+	int ReadHeader() { return 1; }
+
 	int RequestData(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE;
-	int ReadHeader() { return 1; }
+
+	int RequestDataObject(vtkInformation *, vtkInformationVector **,
+		vtkInformationVector *)
+	{
+		return 1;
+	}
 
 	int RequestUpdateExtent(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE
 	{
 		return 1;
 	}
+
 	int RequestInformation(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE
 	{
 		return 1;
 	}
 
+private:
+	fitsfile * pFile;
 
 	// Default method performs Update to get information.  Not all the old
 	// structured points sources compute information

@@ -84,7 +84,7 @@ int vtkFitsReader::RequestData(
 	vtkFloatArray* scalars = vtkFloatArray::New();
 	scalars->SetNumberOfComponents(npixels);
 	float * pscalars = scalars->WritePointer(0, npixels);
-	
+
 	size_t idx = 0;
 	while (npixels > 0) {
 
