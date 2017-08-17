@@ -1,6 +1,8 @@
 #include <vtkOutlineFilter.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkSmartPointer.h>
+#include <vtkXMLStructuredGridReader.h>
+
 #include <vtkImageDataGeometryFilter.h>
 #include <vtkRenderWindow.h>
 #include <vtkMarchingCubes.h>
@@ -22,12 +24,13 @@ int main() {
 	  vtkSmartPointer<vtkRenderWindowInteractor>::New();
   iren->SetRenderWindow(renWin);
   // vtk pipeline
-  vtkFitsReader *fitsReader = vtkFitsReader::New();
+  vtkSmartPointer<vtkFitsReader> fitsReader =
+	  vtkSmartPointer<vtkFitsReader>::New();
   fitsReader->SetFileName("D:/project/Masters/vtkFitsReader/data/OMC.fits");
   fitsReader->Update();
 
   // outline
-  vtkSmartPointer<vtkOutlineFilter> outlineF = 
+  vtkSmartPointer<vtkOutlineFilter> outlineF =
 	  vtkSmartPointer<vtkOutlineFilter>::New();
   outlineF->SetInputData(fitsReader->GetOutput());
 

@@ -32,6 +32,14 @@
 # define VTKIOFITS_NO_DEPRECATED
 #endif
 
-
+#define FITS_SAFE_CALL(callback,status) \
+	if((callback)) \
+	{ \
+		cerr << "vtkFitsReader ERROR."; \
+		if (status) { \
+			fits_report_error(stderr, status);  /* print error report */ \
+			exit(status);    /* terminate the program, returning error status */ \
+		} \
+	}
 
 #endif

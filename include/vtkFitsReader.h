@@ -8,12 +8,12 @@
 #define __vtkFitsReader_h
 
 #include <vtkDataReader.h>
+#include <vtkStructuredPoints.h>
 #include <vtkStructuredPointsReader.h>
 #include <fitsio.h>
 #include "vtkIOFitsModule.h"
-#include "vtkStructuredPoints.h"
 
-class VTK_EXPORT vtkFitsReader : public vtkStructuredPointsReader
+class VTK_EXPORT vtkFitsReader : public vtkStructuredPointsReader 
 {
 public:
 
@@ -37,6 +37,7 @@ protected:
 		return 1;
 	}
 
+
 	int RequestUpdateExtent(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE
 	{
@@ -44,10 +45,7 @@ protected:
 	}
 
 	int RequestInformation(vtkInformation *, vtkInformationVector **,
-		vtkInformationVector *) VTK_OVERRIDE
-	{
-		return 1;
-	}
+		vtkInformationVector *);
 
 private:
 	fitsfile * pFile;
