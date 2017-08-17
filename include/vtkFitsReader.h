@@ -20,29 +20,20 @@ public:
 	static vtkFitsReader *New() {return new vtkFitsReader;};
 	vtkTypeMacro(vtkFitsReader, vtkStructuredPointsReader)
 	void PrintSelf(ostream& os, vtkIndent indent) VTK_OVERRIDE;
+	vtkStructuredPoints* GetOutput(int);
+	vtkStructuredPoints* GetOutput();
 
 protected:
 	vtkFitsReader();
 	void PrintError(int status); // from fitsio distribution
-	int ProcessRequest(vtkInformation*, vtkInformationVector**,
-		vtkInformationVector*) VTK_OVERRIDE;
-	int ReadHeader() { return 1; }
+	void ReadHeader();
+
+	void SetOutput(vtkStructuredPoints*);
+	int FillOutputPortInformation(int, vtkInformation*);
 
 	int RequestData(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE;
 
-	int RequestDataObject(vtkInformation *, vtkInformationVector **,
-		vtkInformationVector *)
-	{
-		return 1;
-	}
-
-
-	int RequestUpdateExtent(vtkInformation *, vtkInformationVector **,
-		vtkInformationVector *) VTK_OVERRIDE
-	{
-		return 1;
-	}
 
 	int RequestInformation(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *);

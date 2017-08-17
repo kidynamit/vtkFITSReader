@@ -607,6 +607,29 @@ int vtkXdmf3Reader::RequestInformation(vtkInformation *,
     spacing[2] = 1.0;
 
     shared_ptr<XdmfRegularGrid> regGrid =
+int vtkDataReader::ProcessRequest(vtkInformation* request,
+                                  vtkInformationVector** inputVector,
+                                  vtkInformationVector* outputVector)
+{
+  // generate the data
+  if(request->Has(vtkDemandDrivenPipeline::REQUEST_DATA()))
+  {
+    return this->RequestData(request, inputVector, outputVector);
+  }
+
+  if(request->Has(vtkStreamingDemandDrivenPipeline::REQUEST_UPDATE_EXTENT()))
+  {
+    return this->RequestUpdateExtent(request, inputVector, outputVector);
+  }
+
+  // execute information
+  if(request->Has(vtkDemandDrivenPipeline::REQUEST_INFORMATION()))
+  {
+    return this->RequestInformation(request, inputVector, outputVector);
+  }
+
+  return this->Superclass::ProcessRequest(request, inputVector, outputVector);
+}
       shared_dynamic_cast<XdmfRegularGrid>(this->Internal->TopGrid);
     if (regGrid)
     {
