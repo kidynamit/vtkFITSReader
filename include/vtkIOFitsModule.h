@@ -32,6 +32,4 @@
 # define VTKIOFITS_NO_DEPRECATED
 #endif
 
-
-
 #endif
