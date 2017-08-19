@@ -27,6 +27,7 @@ set(SOURCES
 	${TEST_DIR}/fits.cxx
 	${SOURCE_DIR}/vtkFitsReader.cxx
 	${INCLUDE_DIR}/vtkFitsReader.h
+	${INCLUDE_DIR}/vtkIOFitsModule.h
 )
 
 add_executable(vtkFitsReader ${SOURCES})
