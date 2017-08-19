@@ -23,6 +23,7 @@ public:
 
 protected:
 	vtkFitsReader();
+	~vtkFitsReader();
 	void PrintError(int status); // from fitsio distribution
 	int RequestData(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE;

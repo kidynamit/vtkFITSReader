@@ -21,6 +21,10 @@ vtkFitsReader::vtkFitsReader() {
   this->pFitsFile = nullptr;
 }
 
+vtkFitsReader::~vtkFitsReader()
+{
+	delete this->pFitsFile;
+}
 
 // Note: from cookbook.c in fitsio distribution.
 void vtkFitsReader::PrintError(int status) {
