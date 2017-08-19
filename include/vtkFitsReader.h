@@ -42,6 +42,8 @@ protected:
 
 	// Default method performs Update to get information.  Not all the old
 	// structured points sources compute information
+private:
+	fitsfile * pFitsFile;
 
 };
 
