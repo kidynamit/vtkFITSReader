@@ -18,6 +18,7 @@ vtkFitsReader::vtkFitsReader() {
   // Filters will know it is empty.
   output->ReleaseData();
   output->Delete();
+  this->pFitsFile = nullptr;
 }
 
 
@@ -54,14 +55,13 @@ int vtkFitsReader::RequestData(
 	// ImageSource superclass does not do this.
 	output->ReleaseData();
 
-	fitsfile * fptr;
 	vtkDebugMacro(<< "Reading vtk structured points file...");
-	if (fits_open_file(&fptr, this->FileName, READONLY, &status))
+	if (fits_open_file(&this->pFitsFile, this->FileName, READONLY, &status))
 	{
 		PrintError(status);
 	}
 	/* read the NAXIS1 and NAXIS2 keyword to get image size */
-	if (fits_read_keys_lng(fptr, "NAXIS", 1, 3, naxes, &nfound, &status))
+	if (fits_read_keys_lng(this->pFitsFile, "NAXIS", 1, 3, naxes, &nfound, &status))
 	{
 		PrintError(status);
 	}
@@ -92,7 +92,7 @@ int vtkFitsReader::RequestData(
 		if (npixels > buffsize)
 			nbuffer = buffsize;
 
-		if (fits_read_img(fptr, TFLOAT, fpixel, nbuffer, &nullval,
+		if (fits_read_img(this->pFitsFile, TFLOAT, fpixel, nbuffer, &nullval,
 			buffer, &anynull, &status))
 			PrintError(status);
 
@@ -113,8 +113,9 @@ int vtkFitsReader::RequestData(
 
 	cerr << "min: " << datamin << " max: " << datamax << endl;
 
-	if (fits_close_file(fptr, &status))
+	if (fits_close_file(this->pFitsFile, &status))
 		PrintError(status);
+	this->pFitsFile = nullptr;
 
 	output->GetPointData()->SetScalars(scalars);
 
@@ -123,7 +124,8 @@ int vtkFitsReader::RequestData(
 	return 1;
 }
 
-void vtkFitsReader::PrintSelf(ostream& os, vtkIndent indent) {
+void vtkFitsReader::PrintSelf(ostream& os, vtkIndent indent) 
+{
   vtkStructuredPointsReader::PrintSelf(os, indent);
   os << indent << "FITS File Name: " << (this->FileName) << "\n";
 }
