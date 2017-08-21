@@ -28,7 +28,7 @@ protected:
 	int RequestData(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE;
 	int ReadHeader() { return 1; }
-	int ReadScalarData(vtkDataSet *, vtkIdType);
+	int ReadScalarData(vtkDataSetAttributes *, vtkIdType);
 
 	int RequestUpdateExtent(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE
