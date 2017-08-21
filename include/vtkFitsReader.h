@@ -8,17 +8,17 @@
 #define __vtkFitsReader_h
 
 #include <vtkDataReader.h>
-#include <vtkStructuredPointsReader.h>
+#include <vtkStructuredGridReader.h>
+#include <vtkStructuredGrid.h>
 #include <fitsio.h>
 #include "vtkIOFitsModule.h"
-#include "vtkStructuredPoints.h"
 
-class VTK_EXPORT vtkFitsReader : public vtkStructuredPointsReader
+class VTK_EXPORT vtkFitsReader : public vtkStructuredGridReader
 {
 public:
 
 	static vtkFitsReader *New() {return new vtkFitsReader;};
-	vtkTypeMacro(vtkFitsReader, vtkStructuredPointsReader)
+	vtkTypeMacro(vtkFitsReader, vtkStructuredGridReader)
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
@@ -43,6 +43,7 @@ protected:
 		return 1;
 	}
 
+	int ReadPoints(vtkPointSet *, vtkIdType);
 
 	// Default method performs Update to get information.  Not all the old
 	// structured points sources compute information

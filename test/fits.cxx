@@ -7,93 +7,48 @@
 #include <vtkRenderer.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkActor.h>
+#include <vtkStructuredGridGeometryFilter.h>
 #include <vtkProperty.h>
 
 #include "vtkFitsReader.h"
 
 int main() {
 
-  // create a window to render into
-  vtkSmartPointer<vtkRenderWindow>renWin = vtkSmartPointer<vtkRenderWindow>::New();
-  vtkSmartPointer<vtkRenderer>ren1 = vtkSmartPointer<vtkRenderer>::New();
-//ren1->SetBackground(1.0, 1.0, 1.0);
-  renWin->AddRenderer(ren1);
-  vtkSmartPointer<vtkRenderWindowInteractor> iren =
-	  vtkSmartPointer<vtkRenderWindowInteractor>::New();
-  iren->SetRenderWindow(renWin);
+;
   // vtk pipeline
   vtkFitsReader *fitsReader = vtkFitsReader::New();
   fitsReader->SetFileName("D:/project/vtk-fits/data/OMC.fits");
   fitsReader->Update();
 
   // outline
-  vtkSmartPointer<vtkOutlineFilter> outlineF = 
-	  vtkSmartPointer<vtkOutlineFilter>::New();
-  outlineF->SetInputData(fitsReader->GetOutput());
+  vtkSmartPointer<vtkStructuredGridGeometryFilter> geometryFilter =
+	  vtkSmartPointer<vtkStructuredGridGeometryFilter>::New();
+  geometryFilter->SetInputConnection(fitsReader->GetOutputPort());
+  geometryFilter->Update();
 
-  vtkSmartPointer<vtkPolyDataMapper> outlineM =
+  // Visualize
+  vtkSmartPointer<vtkPolyDataMapper> mapper =
 	  vtkSmartPointer<vtkPolyDataMapper>::New();
-  outlineM->SetInputData(outlineF->GetOutput());
-  outlineM->ScalarVisibilityOff();
+  mapper->SetInputConnection(geometryFilter->GetOutputPort());
 
-  vtkSmartPointer<vtkActor> outlineA= vtkSmartPointer<vtkActor>::New();
-  outlineA->SetMapper(outlineM);
-//outlineA->GetProperty()->SetColor(0.0, 0.0, 0.0);
+  vtkSmartPointer<vtkActor> actor =
+	  vtkSmartPointer<vtkActor>::New();
+  actor->SetMapper(mapper);
 
-  // isosurface
-  vtkSmartPointer<vtkMarchingCubes> shellE = 
-	  vtkSmartPointer<vtkMarchingCubes>::New();
-  shellE->SetInputData(fitsReader->GetOutput());
-  shellE->SetValue(0, 10.0f);
+  vtkSmartPointer<vtkRenderer> renderer =
+	  vtkSmartPointer<vtkRenderer>::New();
+  vtkSmartPointer<vtkRenderWindow> renderWindow =
+	  vtkSmartPointer<vtkRenderWindow>::New();
+  renderWindow->AddRenderer(renderer);
+  vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
+	  vtkSmartPointer<vtkRenderWindowInteractor>::New();
+  renderWindowInteractor->SetRenderWindow(renderWindow);
 
-  // decimatevoid 
-//vtkDecimate *shellD = vtkDecimate::New();
-//shellD->SetInputData(shellE->GetOutput());
-//shellD->SetTargetReduction(0.7);
+  renderer->AddActor(actor);
+  renderer->SetBackground(.3, .6, .3); // Background color green
 
-  vtkSmartPointer<vtkPolyDataMapper> shellM =
-	  vtkSmartPointer<vtkPolyDataMapper>::New();
-  shellM->SetInputData(shellE->GetOutput());
-//shellM->SetInputData(shellD->GetOutput());
-  shellM->ScalarVisibilityOff();
+  renderWindow->Render();
+  renderWindowInteractor->Start();
 
-  vtkSmartPointer<vtkActor> shellA = vtkSmartPointer<vtkActor>::New();
-  shellA->SetMapper(shellM);
-  shellA->GetProperty()->SetColor(0.5, 0.5, 1.0);
-
-  // slice
-  vtkImageDataGeometryFilter *sliceE =
-               vtkImageDataGeometryFilter::New();
-  // values are clamped
-  sliceE->SetExtent(0, 5000, 0, 5000, 13, 13);
-  sliceE->SetInputData(fitsReader->GetOutput());
-
-  vtkSmartPointer<vtkPolyDataMapper> sliceM = 
-	  vtkSmartPointer<vtkPolyDataMapper>::New();
-  sliceM->SetInputData(sliceE->GetOutput());
-  sliceM->ScalarVisibilityOn();
-  double * range = fitsReader->GetOutput()->GetScalarRange();
-  sliceM->SetScalarRange(range);
-
-  vtkActor *sliceA = vtkActor::New();
-  sliceA->SetMapper(sliceM);
-
-  // add actors to renderer
-  ren1->AddActor(outlineA);
-  ren1->AddActor(shellA);
-  ren1->AddActor(sliceA);
-
-  // Render an image; since no lights/cameras specified, created automatically
-  renWin->Render();
-
-  // uncomment to write VRML
-  //vtkVRMLExporter *vrml = vtkVRMLExporter::New();
-  //vrml->SetRenderWindow(renWin);
-  //vrml->SetFileName("out.wrl");
-  //vrml->Write(); 
-
-  // Begin mouse interaction
-  iren->Start();
-
-  return 0;
+  return EXIT_SUCCESS;
 }

@@ -13,8 +13,9 @@
 #include <vtkCellData.h>
 #include <vtkStreamingDemandDrivenPipeline.h>
 
-vtkFitsReader::vtkFitsReader() {
-	vtkStructuredPoints *output = vtkStructuredPoints::New();
+vtkFitsReader::vtkFitsReader() 
+{
+	vtkStructuredGrid *output = vtkStructuredGrid::New();
 	this->SetOutput(output);
 	// Releasing data for pipeline parallism.
 	// Filters will know it is empty.
@@ -52,7 +53,7 @@ int vtkFitsReader::RequestData(
 	this->SetErrorCode(vtkErrorCode::NoError);
 	vtkIdType numPts = 0, numCells = 0;
 	int dimsRead = 0, arRead = 0, originRead = 0;
-	vtkStructuredPoints *output = vtkStructuredPoints::SafeDownCast(
+	vtkStructuredGrid *output = vtkStructuredGrid::SafeDownCast(
 		outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
 	int status = 0, nfound = 0, anynull = 0;
