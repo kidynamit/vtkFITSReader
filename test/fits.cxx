@@ -23,7 +23,7 @@ int main() {
   iren->SetRenderWindow(renWin);
   // vtk pipeline
   vtkFitsReader *fitsReader = vtkFitsReader::New();
-  fitsReader->SetFileName("D:/project/Masters/vtkFitsReader/data/OMC.fits");
+  fitsReader->SetFileName("D:/project/vtk-fits/data/OMC.fits");
   fitsReader->Update();
 
   // outline

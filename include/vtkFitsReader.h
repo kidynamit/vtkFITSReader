@@ -28,15 +28,18 @@ protected:
 	int RequestData(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE;
 	int ReadHeader() { return 1; }
+	int ReadScalarData(vtkDataSet *, vtkIdType);
 
 	int RequestUpdateExtent(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE
 	{
+		cerr << "RequestUpdateExtent" << endl;
 		return 1;
 	}
 	int RequestInformation(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE
 	{
+		cerr << "RequestInformation" << endl;
 		return 1;
 	}
 
@@ -45,6 +48,8 @@ protected:
 	// structured points sources compute information
 private:
 	fitsfile * pFitsFile;
+	float DataMin;
+	float DataMax;
 
 };
 
