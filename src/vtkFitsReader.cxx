@@ -66,17 +66,25 @@ int vtkFitsReader::RequestData(
 	output->ReleaseData();
 
 	vtkDebugMacro(<< "Reading vtk structured points file...");
+	if (fits_open_file(&this->pFitsFile, this->FileName, READONLY, &status))
+	{
+		PrintError(status);
+	}
+	/* read the NAXIS1 and NAXIS2 keyword to get image size */
+	if (fits_read_keys_lng(this->pFitsFile, "NAXIS", 1, 3, naxes, &nfound, &status))
+	{
+		PrintError(status);
+	}
 
-	npixels = naxes[0] * naxes[1] * naxes[2]; /* num of pixels in the image */
+	npixels = (naxes[0] - 1) * (naxes[1] - 1) * (naxes[2] - 1); /* num of pixels in the image */
 	fpixel = 1;
 	nullval = 0;                /* don't check for null values in the image */
 
-	output->SetDimensions(4, 4, 4);
+	output->SetDimensions(naxes[0] - 1, naxes[1] - 1, naxes[2] - 1);
 
-
-	
-	this->ReadPoints(output, 64);
-
+	this->ReadPoints(output, npixels);
+	if (fits_close_file(this->pFitsFile, &status))
+		PrintError(status);
 	this->pFitsFile = nullptr;
 	cerr << "done." << endl;
 
@@ -90,11 +98,36 @@ int vtkFitsReader::ReadPoints(vtkPointSet * pointSet, vtkIdType numPoints)
 	vtkIdType numComp = 3;
 	vtkAbstractArray * array = vtkFloatArray::New();
 	array->SetNumberOfComponents(numComp);	
-	float *ptr = ((vtkFloatArray *)array)->WritePointer(0, numPoints*numComp);
-	for (int i = 0; i < numPoints; i++)
-		for (int j = 0; j < numComp; j++)
-			ptr[i*numComp + j] = (float)rand() / (float)(RAND_MAX);
-	
+	float *ptr = ((vtkFloatArray *)array)->WritePointer(0, numPoints);
+
+	size_t idx = 0;
+	int status = 0;
+	long fpixel = 1, nbuffer;
+	float buffer[IOBUFLEN];
+	float nullval;
+	int anynull = 0;
+
+	vtkIdType npixels = numPoints;
+	while (npixels > 0)
+	{
+		nbuffer = npixels;
+		if (npixels > IOBUFLEN)
+			nbuffer = IOBUFLEN;
+
+		if (fits_read_img(this->pFitsFile, TFLOAT, fpixel, nbuffer, &nullval,
+			buffer, &anynull, &status))
+			PrintError(status);
+
+		for (int i = 0; i < nbuffer; i++)
+		{
+			if (_isnanf(buffer[i])) buffer[i] = -1000000.0; // hack for now
+			ptr[idx++] = buffer[i];
+		}
+
+		npixels -= nbuffer;    /* increment remaining number of pixels */
+		fpixel += nbuffer;    /* next pixel to be read in image */
+	}
+
 	vtkDataArray * data = vtkArrayDownCast<vtkDataArray>(array);
 	vtkPoints * points = vtkPoints::New();
 	points->SetData(data);
