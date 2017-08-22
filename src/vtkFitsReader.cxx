@@ -55,10 +55,9 @@ int vtkFitsReader::RequestData(
 		outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
 	int status = 0, nfound = 0, anynull = 0;
-	long naxes[3], fpixel, nbuffer, npixels;
+	long naxes[3], fpixel, npixels;
 	const int buffsize = 1000;
 
-	float datamin, datamax, nullval, buffer[buffsize];
 	// ImageSource superclass does not do this.
 	output->ReleaseData();
 
@@ -74,7 +73,6 @@ int vtkFitsReader::RequestData(
 	}
 	npixels = naxes[0] * naxes[1] * naxes[2]; /* num of pixels in the image */
 	fpixel = 1;
-	nullval = 0;                /* don't check for null values in the image */
 	int dim [3] = { naxes[0], naxes[1], naxes[2] };
 	output->SetDimensions(dim);
 	output->SetOrigin(0.0, 0.0, 0.0);
@@ -140,10 +138,9 @@ int vtkFitsReader::ReadMetaData(vtkInformation * outInformation)
 		outInformation->Get(vtkDataObject::DATA_OBJECT()));
 
 	int status = 0, nfound = 0, anynull = 0;
-	long naxes[3], fpixel, nbuffer, npixels;
+	long naxes[3]; 
 	const int buffsize = 1000;
 
-	float datamin, datamax, nullval, buffer[buffsize];
 	// ImageSource superclass does not do this.
 	output->ReleaseData();
 
