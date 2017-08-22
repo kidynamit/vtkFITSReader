@@ -51,7 +51,6 @@ int vtkFitsReader::RequestData(
 	vtkInformation *outInfo = outputVector->GetInformationObject(0);
 	this->SetErrorCode(vtkErrorCode::NoError);
 	vtkIdType numPts = 0, numCells = 0;
-	int dimsRead = 0, arRead = 0, originRead = 0;
 	vtkStructuredPoints *output = vtkStructuredPoints::SafeDownCast(
 		outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
@@ -76,9 +75,11 @@ int vtkFitsReader::RequestData(
 	npixels = naxes[0] * naxes[1] * naxes[2]; /* num of pixels in the image */
 	fpixel = 1;
 	nullval = 0;                /* don't check for null values in the image */
-
-	output->SetDimensions(naxes[0], naxes[1], naxes[2]);
+	int dim [3] = { naxes[0], naxes[1], naxes[2] };
+	output->SetDimensions(dim);
 	output->SetOrigin(0.0, 0.0, 0.0);
+	output->SetSpacing(1.0, 1.0, 1.0);
+	this->SetScalarLut("default"); //may be "default"
 
 	this->ReadScalarData(output, npixels);
 
@@ -94,10 +95,8 @@ int vtkFitsReader::ReadScalarData(vtkDataSet * dataSet, vtkIdType numPts)
 {
 	vtkIdType numComp = 1;
 	vtkDataSetAttributes * attrib = dataSet->GetPointData();
-	vtkDataSetAttributes * cattrib = dataSet->GetCellData();
 	vtkAbstractArray * array;
 	array = vtkFloatArray::New();
-	array->SetNumberOfTuples(numPts);
 	array->SetNumberOfComponents(numComp);
 	float *ptr = ((vtkFloatArray *)array)->WritePointer(0, numPts*numComp);
 	size_t idx = 0;
@@ -127,15 +126,61 @@ int vtkFitsReader::ReadScalarData(vtkDataSet * dataSet, vtkIdType numPts)
 		npixels -= nbuffer;    /* increment remaining number of pixels */
 		fpixel += nbuffer;    /* next pixel to be read in image */
 	}
-	vtkByteSwap::Swap4BERange(ptr, numPts*numComp);
 	vtkDataArray * data = vtkArrayDownCast<vtkDataArray>(array);
 
 	data->SetName(this->FileName);
 	attrib->AddArray(data);
-	cattrib->AddArray(data);
 	data->Delete();
 	return 1;
 }
+
+int vtkFitsReader::ReadMetaData(vtkInformation * outInformation)
+{
+	vtkStructuredPoints *output = vtkStructuredPoints::SafeDownCast(
+		outInformation->Get(vtkDataObject::DATA_OBJECT()));
+
+	int status = 0, nfound = 0, anynull = 0;
+	long naxes[3], fpixel, nbuffer, npixels;
+	const int buffsize = 1000;
+
+	float datamin, datamax, nullval, buffer[buffsize];
+	// ImageSource superclass does not do this.
+	output->ReleaseData();
+
+	vtkDebugMacro(<< "Reading vtk structured points file...");
+	if (fits_open_file(&this->pFitsFile, this->FileName, READONLY, &status))
+	{
+		PrintError(status);
+	}
+	/* read the NAXIS1 and NAXIS2 keyword to get image size */
+	if (fits_read_keys_lng(this->pFitsFile, "NAXIS", 1, 3, naxes, &nfound, &status))
+	{
+		PrintError(status);
+	}
+	outInformation->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),
+		0, naxes[0] - 1, 0, naxes[1] - 1, 0, naxes[2] - 1);
+	double ar[3] = { 1, 1, 1 };
+	vtkDataObject::SetPointDataActiveScalarInfo(outInformation, VTK_FLOAT, 1);
+	outInformation->Set(vtkDataObject::SPACING(), ar, 3);
+	double origin[3] = { 0, 0, 0 };
+	outInformation->Set(vtkDataObject::ORIGIN(), origin, 3);
+
+	vtkDataObject::SetPointDataActiveScalarInfo(outInformation, VTK_FLOAT, 1);
+	if (fits_close_file(this->pFitsFile, &status))
+		PrintError(status);
+	this->pFitsFile = nullptr;
+	return 1;
+}
+
+
+int vtkFitsReader::RequestInformation(vtkInformation *, vtkInformationVector **,
+	vtkInformationVector * outputVector) 
+{
+	cerr << "RequestInformation" << endl;
+	vtkInformation *outInfo = outputVector->GetInformationObject(0);
+	return this->ReadMetaData(outInfo);
+}
+
 
 void vtkFitsReader::PrintSelf(ostream& os, vtkIndent indent) 
 {

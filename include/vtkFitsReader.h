@@ -21,6 +21,8 @@ public:
 	vtkTypeMacro(vtkFitsReader, vtkStructuredPointsReader)
 	void PrintSelf(ostream& os, vtkIndent indent);
 
+	int ReadMetaData(vtkInformation *) VTK_OVERRIDE;
+
 protected:
 	vtkFitsReader();
 	~vtkFitsReader();
@@ -37,12 +39,7 @@ protected:
 		return 1;
 	}
 	int RequestInformation(vtkInformation *, vtkInformationVector **,
-		vtkInformationVector *) VTK_OVERRIDE
-	{
-		cerr << "RequestInformation" << endl;
-		return 1;
-	}
-
+		vtkInformationVector *) VTK_OVERRIDE;
 
 	// Default method performs Update to get information.  Not all the old
 	// structured points sources compute information
