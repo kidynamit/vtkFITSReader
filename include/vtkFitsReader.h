@@ -13,7 +13,7 @@
 #include "vtkIOFitsModule.h"
 #include "vtkStructuredPoints.h"
 
-class VTK_EXPORT vtkFitsReader : public vtkStructuredPointsReader
+class VTKIOFITS_EXPORT vtkFitsReader : public vtkStructuredPointsReader
 {
 public:
 
@@ -22,7 +22,6 @@ public:
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 	vtkStructuredPoints * GetOutput();
-
 	vtkStructuredPoints * GetOutput(int);
 
 	int ReadMetaData(vtkInformation *) VTK_OVERRIDE;
@@ -31,20 +30,22 @@ protected:
 	vtkFitsReader();
 	~vtkFitsReader() VTK_OVERRIDE;
 	void PrintError(int status); // from fitsio distribution
-	int RequestData(vtkInformation *, vtkInformationVector **,
-		vtkInformationVector *) VTK_OVERRIDE;
+
 	int ReadHeader() { return 1; }
 	int ReadScalarData(vtkDataSet *, vtkIdType);
 
+	int FillOutputPortInformation(int, vtkInformation *) VTK_OVERRIDE;
+
+	int RequestData(vtkInformation *, vtkInformationVector **,
+		vtkInformationVector *) VTK_OVERRIDE;
+	int RequestInformation(vtkInformation *, vtkInformationVector **,
+		vtkInformationVector *) VTK_OVERRIDE;
 	int RequestUpdateExtent(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE
 	{
 		cerr << "RequestUpdateExtent" << endl;
 		return 1;
 	}
-	int RequestInformation(vtkInformation *, vtkInformationVector **,
-		vtkInformationVector *) VTK_OVERRIDE;
-	int FillOutputPortInformation(int, vtkInformation *) VTK_OVERRIDE;
 
 	// Default method performs Update to get information.  Not all the old
 	// structured points sources compute information
