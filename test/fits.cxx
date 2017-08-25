@@ -8,27 +8,31 @@
 
 #include <vtkOutlineFilter.h>
 #include <vtkImageDataGeometryFilter.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindowInteractor.h>
+#include <vtkOculusRenderWindow.h>
+#include <vtkOculusRenderer.h>
+#include <vtkOculusRenderWindowInteractor.h>
 #include <vtkActor.h>
 #include <vtkProperty.h>
 
 #include "vtkFitsReader.h"
 
+#ifdef main
+#undef main
+#endif
+
 int main() 
 {
 
-	vtkSmartPointer<vtkRenderer> renderer =
-	  vtkSmartPointer<vtkRenderer>::New();
+	vtkSmartPointer<vtkOculusRenderer> renderer =
+	  vtkSmartPointer<vtkOculusRenderer>::New();
 
 	renderer->SetBackground(.3, .6, .3); // Background color green
-	vtkSmartPointer<vtkRenderWindow> renderWindow =
-		vtkSmartPointer<vtkRenderWindow>::New();
+	vtkSmartPointer<vtkOculusRenderWindow> renderWindow =
+		vtkSmartPointer<vtkOculusRenderWindow>::New();
 	renderWindow->AddRenderer(renderer);
 
-	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
-		vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	vtkSmartPointer<vtkOculusRenderWindowInteractor> renderWindowInteractor =
+		vtkSmartPointer<vtkOculusRenderWindowInteractor>::New();
 	renderWindowInteractor->SetRenderWindow(renderWindow);
 
 	renderWindow->Render();
@@ -101,6 +105,5 @@ int main()
 	renderWindow->Render();
 
 	renderWindowInteractor->Start();
-
 	return EXIT_SUCCESS;
 }
