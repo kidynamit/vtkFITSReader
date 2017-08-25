@@ -2,14 +2,17 @@ cmake_minimum_required(VERSION 3.0.2)
 
 project(vtkFitsReader)
 
-find_package(VTK REQUIRED)
-
-include(${VTK_USE_FILE})
-include("cmake/FindCFitsIO.cmake")
-
 set(SOURCE_DIR  "${CMAKE_SOURCE_DIR}/src")
 set(TEST_DIR "${CMAKE_SOURCE_DIR}/test")
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
+set(CMAKE_DIR "${CMAKE_SOURCE_DIR}/cmake")
+
+set(CMAKE_MODULE_PATH ${CMAKE_DIR} ${CMAKE_MODULE_PATH})
+
+include(${VTK_USE_FILE})
+include(FindCFitsIO)
+
+find_package(VTK REQUIRED)
 
 # OpenGL
 FIND_PACKAGE(OpenGL REQUIRED)
