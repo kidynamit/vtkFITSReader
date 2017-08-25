@@ -40,8 +40,6 @@ int main()
 	//fitsReader->SetFileName("D:/sdevk__/vtkData/Data/ironProt.vtk");
 	fitsReader->Update();
 
-#ifndef VIEW_VOLUME_OUTLINE
-#define VIEW_VOLUME_OUTLINE
 	vtkSmartPointer<vtkImageDataGeometryFilter> geometryFilter =
 	  vtkSmartPointer<vtkImageDataGeometryFilter>::New();
 	geometryFilter->SetInputConnection(fitsReader->GetOutputPort());
@@ -65,11 +63,7 @@ int main()
 
 	renderer->AddActor(ofActor);
 	renderWindow->Render();
-#endif 
 
-//#ifdef VIEW_VOLUME_OUTLINE
-//#ifndef VIEW_VOLUMETRIC_RAYCASTING
-//#define VIEW_VOLUMETRIC_RAYCASTING
 	vtkSmartPointer<vtkSmartVolumeMapper> volumeMapper =
 		vtkSmartPointer<vtkSmartVolumeMapper>::New();
 	volumeMapper->SetBlendModeToComposite();
@@ -105,9 +99,6 @@ int main()
 
 	renderWindow->SetMultiSamples(0);
 	renderWindow->Render();
-
-//#endif
-//#endif
 
 	renderWindowInteractor->Start();
 
