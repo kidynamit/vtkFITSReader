@@ -14,13 +14,14 @@
 #include <vtkStreamingDemandDrivenPipeline.h>
 
 vtkFitsReader::vtkFitsReader() {
+	this->pFitsFile = nullptr;
+
 	vtkStructuredPoints *output = vtkStructuredPoints::New();
 	this->SetOutput(output);
 	// Releasing data for pipeline parallism.
 	// Filters will know it is empty.
 	output->ReleaseData();
 	output->Delete();
-	this->pFitsFile = nullptr;
 }
 
 vtkFitsReader::~vtkFitsReader()
@@ -38,7 +39,12 @@ void vtkFitsReader::PrintError(int status) {
     }
     return;
 }
-
+int vtkFitsReader::FillOutputPortInformation(int,
+	vtkInformation *info)
+{
+	info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkStructuredPoints");
+	return 1;
+}
 //----------------------------------------------------------------------------
 
 int vtkFitsReader::RequestData(
@@ -93,8 +99,7 @@ int vtkFitsReader::ReadScalarData(vtkDataSet * dataSet, vtkIdType numPts)
 {
 	vtkIdType numComp = 1;
 	vtkDataSetAttributes * attrib = dataSet->GetPointData();
-	vtkAbstractArray * array;
-	array = vtkFloatArray::New();
+	vtkAbstractArray * array = vtkFloatArray::New();
 	array->SetNumberOfComponents(numComp);
 	float *ptr = ((vtkFloatArray *)array)->WritePointer(0, numPts*numComp);
 	size_t idx = 0;
@@ -126,9 +131,8 @@ int vtkFitsReader::ReadScalarData(vtkDataSet * dataSet, vtkIdType numPts)
 	}
 	vtkDataArray * data = vtkArrayDownCast<vtkDataArray>(array);
 
-	data->SetName(this->FileName);
-	attrib->AddArray(data);
-	data->Delete();
+	data->SetName("values");
+	attrib->SetScalars(data);
 	return 1;
 }
 
@@ -183,4 +187,15 @@ void vtkFitsReader::PrintSelf(ostream& os, vtkIndent indent)
 {
 	this->Superclass::PrintSelf(os, indent);
 	os << indent << "FITS File Name: " << (this->FileName) << "\n";
+}
+
+vtkStructuredPoints* vtkFitsReader::GetOutput()
+{
+	return this->GetOutput(0);
+}
+
+//----------------------------------------------------------------------------
+vtkStructuredPoints* vtkFitsReader::GetOutput(int idx)
+{
+	return vtkStructuredPoints::SafeDownCast(this->GetOutputDataObject(idx));
 }

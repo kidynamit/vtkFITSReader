@@ -21,11 +21,15 @@ public:
 	vtkTypeMacro(vtkFitsReader, vtkStructuredPointsReader)
 	void PrintSelf(ostream& os, vtkIndent indent);
 
+	vtkStructuredPoints * GetOutput();
+
+	vtkStructuredPoints * GetOutput(int);
+
 	int ReadMetaData(vtkInformation *) VTK_OVERRIDE;
 
 protected:
 	vtkFitsReader();
-	~vtkFitsReader();
+	~vtkFitsReader() VTK_OVERRIDE;
 	void PrintError(int status); // from fitsio distribution
 	int RequestData(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE;
@@ -40,6 +44,7 @@ protected:
 	}
 	int RequestInformation(vtkInformation *, vtkInformationVector **,
 		vtkInformationVector *) VTK_OVERRIDE;
+	int FillOutputPortInformation(int, vtkInformation *) VTK_OVERRIDE;
 
 	// Default method performs Update to get information.  Not all the old
 	// structured points sources compute information
