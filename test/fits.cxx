@@ -100,11 +100,6 @@ int main()
 	volume->SetMapper(volumeMapper);
 	volume->SetProperty(volumeProperty);
 
-	vtkSmartPointer<KeyPressInteractorStyle> style =
-		vtkSmartPointer<KeyPressInteractorStyle>::New();
-	renderWindowInteractor->SetInteractorStyle(style);
-	style->SetCurrentRenderer(renderer);
-
 	renderer->AddViewProp(volume);
 	renderer->ResetCamera();
 
