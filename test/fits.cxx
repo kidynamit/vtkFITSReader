@@ -1,89 +1,109 @@
-#include "vtkCommon.h"
-#include "vtkGraphics.h"
-#include "vtkPatented.h"
-#include "vtkFitsReader.h"
+#include <vtkPolyDataMapper.h>
 #include <vtkSmartPointer.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
 
-main() {
+#include <vtkSmartVolumeMapper.h>
+#include <vtkVolumeProperty.h>
+#include <vtkPiecewiseFunction.h>
+#include <vtkColorTransferFunction.h>
 
-  // create a window to render into
-  vtkSmartPointer<vtkRenderWindow>renWin = vtkSmartPointer<vtkRenderWindow>::New();
-  vtkSmartPointer<vtkRenderer>ren1 = vtkSmartPointer<vtkRenderer>::New();
-//ren1->SetBackground(1.0, 1.0, 1.0);
-  renWin->AddRenderer(ren1);
-  vtkSmartPointer<vtkRenderWindowInteractor> iren =
-	  vtkSmartPointer<vtkRenderWindowInteractor>::New();
-  iren->SetRenderWindow(renWin);
-  // vtk pipeline
-  vtkFitsReader *fitsReader = vtkFitsReader::New();
-  fitsReader->SetFileName("OMC.fits");
-  fitsReader->Update();
+#include <vtkOutlineFilter.h>
+#include <vtkImageDataGeometryFilter.h>
+#include <vtkOculusRenderWindow.h>
+#include <vtkOculusRenderer.h>
+#include <vtkOculusRenderWindowInteractor.h>
+#include <vtkActor.h>
+#include <vtkProperty.h>
 
-  // outline
-  vtkOutlineFilter *outlineF = vtkOutlineFilter::New();
-  outlineF->SetInput(fitsReader->GetOutput());
+#include "vtkFitsReader.h"
 
-  vtkPolyDataMapper *outlineM = vtkPolyDataMapper::New();
-  outlineM->SetInput(outlineF->GetOutput());
-  outlineM->ScalarVisibilityOff();
+#ifdef main
+#undef main
+#endif
 
-  vtkActor *outlineA = vtkActor::New();
-  outlineA->SetMapper(outlineM);
-//outlineA->GetProperty()->SetColor(0.0, 0.0, 0.0);
+int main() 
+{
 
-  // isosurface
-  vtkMarchingCubes *shellE = vtkMarchingCubes::New();
-  shellE->SetInput(fitsReader->GetOutput());
-  shellE->SetValue(0, 10.0f);
+	vtkSmartPointer<vtkOculusRenderer> renderer =
+	  vtkSmartPointer<vtkOculusRenderer>::New();
 
-  // decimate
-//vtkDecimate *shellD = vtkDecimate::New();
-//shellD->SetInput(shellE->GetOutput());
-//shellD->SetTargetReduction(0.7);
+	renderer->SetBackground(.3, .6, .3); // Background color green
+	vtkSmartPointer<vtkOculusRenderWindow> renderWindow =
+		vtkSmartPointer<vtkOculusRenderWindow>::New();
+	renderWindow->AddRenderer(renderer);
 
-  vtkPolyDataMapper *shellM = vtkPolyDataMapper::New();
-  shellM->SetInput(shellE->GetOutput());
-//shellM->SetInput(shellD->GetOutput());
-  shellM->ScalarVisibilityOff();
+	vtkSmartPointer<vtkOculusRenderWindowInteractor> renderWindowInteractor =
+		vtkSmartPointer<vtkOculusRenderWindowInteractor>::New();
+	renderWindowInteractor->SetRenderWindow(renderWindow);
 
-  vtkActor *shellA = vtkActor::New();
-  shellA->SetMapper(shellM);
-  shellA->GetProperty()->SetColor(0.5, 0.5, 1.0);
+	renderWindow->Render();
 
-  // slice
-  vtkStructuredPointsGeometryFilter *sliceE =
-               vtkStructuredPointsGeometryFilter::New();
-  // values are clamped
-  sliceE->SetExtent(0, 5000, 0, 5000, 13, 13);
-  sliceE->SetInput(fitsReader->GetOutput());
+	// vtk pipeline
+	vtkFitsReader *fitsReader = vtkFitsReader::New();
+	fitsReader->SetFileName("D:/project/vtk-fits/data/OMC.fits");
+	//vtkStructuredPointsReader *fitsReader = vtkStructuredPointsReader::New();
+	//fitsReader->SetFileName("D:/sdevk__/vtkData/Data/ironProt.vtk");
+	fitsReader->Update();
 
-  vtkPolyDataMapper *sliceM = vtkPolyDataMapper::New();
-  sliceM->SetInput(sliceE->GetOutput());
-  sliceM->ScalarVisibilityOn();
-  float *range;
-  range = fitsReader->GetOutput()->GetScalarRange();
-  sliceM->SetScalarRange(range);
+	vtkSmartPointer<vtkImageDataGeometryFilter> geometryFilter =
+	  vtkSmartPointer<vtkImageDataGeometryFilter>::New();
+	geometryFilter->SetInputConnection(fitsReader->GetOutputPort());
+	geometryFilter->Update();
 
-  vtkActor *sliceA = vtkActor::New();
-  sliceA->SetMapper(sliceM);
+	vtkSmartPointer<vtkOutlineFilter> outlineFilter =
+	  vtkSmartPointer<vtkOutlineFilter>::New();
+	outlineFilter->SetInputConnection(fitsReader->GetOutputPort());
+	outlineFilter->Update();
 
-  // add actors to renderer
-  ren1->AddActor(outlineA);
-  ren1->AddActor(shellA);
-  ren1->AddActor(sliceA);
+	// Visualize
+	vtkSmartPointer<vtkPolyDataMapper> ofMapper =
+	  vtkSmartPointer<vtkPolyDataMapper>::New();
+	ofMapper->SetInputConnection(outlineFilter->GetOutputPort());
+	ofMapper->ScalarVisibilityOff();
 
-  // Render an image; since no lights/cameras specified, created automatically
-  renWin->Render();
+	vtkSmartPointer<vtkActor> ofActor =
+	  vtkSmartPointer<vtkActor>::New();
+	ofActor->SetMapper(ofMapper);
+	ofActor->GetProperty()->SetColor(0, 0, 0);
 
-  // uncomment to write VRML
-  //vtkVRMLExporter *vrml = vtkVRMLExporter::New();
-  //vrml->SetRenderWindow(renWin);
-  //vrml->SetFileName("out.wrl");
-  //vrml->Write(); 
+	renderer->AddActor(ofActor);
+	renderWindow->Render();
 
-  // Begin mouse interaction
-  iren->Start();
+	vtkSmartPointer<vtkSmartVolumeMapper> volumeMapper =
+		vtkSmartPointer<vtkSmartVolumeMapper>::New();
+	volumeMapper->SetBlendModeToComposite();
+	volumeMapper->SetInputConnection(fitsReader->GetOutputPort());
 
+	vtkSmartPointer<vtkVolumeProperty> volumeProperty = 
+		vtkSmartPointer<vtkVolumeProperty>::New();
+	volumeProperty->ShadeOff();
+	volumeProperty->SetInterpolationType(VTK_LINEAR_INTERPOLATION);
+
+	vtkSmartPointer<vtkPiecewiseFunction> compositeOpacity =
+		vtkSmartPointer<vtkPiecewiseFunction>::New();
+	compositeOpacity->AddPoint(0.0, 0.0);
+	compositeOpacity->AddPoint(80.0, 1.0);
+	compositeOpacity->AddPoint(80.1, 0.0);
+	compositeOpacity->AddPoint(255.0, 0.0);
+	volumeProperty->SetScalarOpacity(compositeOpacity); // composite first.
+
+	vtkSmartPointer<vtkColorTransferFunction> color =
+		vtkSmartPointer<vtkColorTransferFunction>::New();
+	color->AddRGBPoint(0.0, 0.0, 0.0, 1.0);
+	color->AddRGBPoint(40.0, 1.0, 0.0, 0.0);
+	color->AddRGBPoint(255.0, 1.0, 1.0, 1.0);
+	volumeProperty->SetColor(color);
+
+	vtkSmartPointer<vtkVolume> volume =
+		vtkSmartPointer<vtkVolume>::New();
+	volume->SetMapper(volumeMapper);
+	volume->SetProperty(volumeProperty);
+
+	renderer->AddViewProp(volume);
+	renderer->ResetCamera();
+
+	renderWindow->SetMultiSamples(0);
+	renderWindow->Render();
+
+	renderWindowInteractor->Start();
+	return EXIT_SUCCESS;
 }
